@@ -9,6 +9,8 @@ public class GameController : MonoBehaviour
     public int height = 10;
 
     public float spacing = 1f;
+    private Transform _parent;
+    private Vector2 _positionOffset;
 
     private List<Piece> _pieces;
 
@@ -17,32 +19,39 @@ public class GameController : MonoBehaviour
         _pieces = new List<Piece>(width * height);
 
         var pieceParentGameObject = new GameObject("Pieces");
-        var parent = pieceParentGameObject.transform;
+        _parent = pieceParentGameObject.transform;
 
-        var positionOffset = new Vector2(-width * 0.5f * spacing + spacing * 0.5f, -height * 0.5f * spacing + spacing * 0.5f);
-        parent.position = positionOffset;
+        _positionOffset = new Vector2(-width * 0.5f * spacing + spacing * 0.5f, -height * 0.5f * spacing + spacing * 0.5f);
+        _parent.position = _positionOffset;
 
-        for (int i = 0; i < width; i++)
+        for (int i = 0; i < width; i++) //проход по горизонтали
         {
-            for (int j = 0; j < height; j++)
+            for (int j = 0; j < height; j++)  //проход по вертикали
             {
-                var position = new Vector2(i * spacing, j * spacing);
-				var prefab = Resources.Load<Piece>("Piece" + Random.Range(0, 6));
-                var randomPiece = Instantiate<Piece>(prefab, position + positionOffset, Quaternion.identity, parent);
-                randomPiece.Initialize(i, j);
-                randomPiece.PieceClickedEvent += OnPieceClicked;
-
-                _pieces.Add(randomPiece);
+                CreatePiece(i,j); //генерация фишки
             }
         }
     }
 
-    private void OnPieceClicked(Piece piece)
+    private void CreatePiece(int i, int j) //рандом для фишки
+    {
+        var position = new Vector2(i * spacing, j * spacing);
+        var prefab = Resources.Load<Piece>("Piece" + Random.Range(0, 6));
+        var randomPiece = Instantiate<Piece>(prefab, position + _positionOffset, Quaternion.identity, _parent);
+        randomPiece.Initialize(i, j);
+        randomPiece.PieceClickedEvent += OnPieceClicked;
+
+        _pieces.Add(randomPiece); //создание фишки
+    }
+
+    private void OnPieceClicked(Piece piece) //по клику
     {
         int column = piece.i;
         int row = piece.j;
 
         var topPieces = new List<Piece>(10);
+
+        CreatePiece(column, height); //создаем фишку в колонке на высоте height
 
         for (int i = 0; i < _pieces.Count; i++)
         {
@@ -52,6 +61,7 @@ public class GameController : MonoBehaviour
                 topPieces.Add(localPiece);
             }
         }
+
 
         foreach(var localPiece in topPieces)
         {
@@ -66,5 +76,8 @@ public class GameController : MonoBehaviour
         spriteRenderer.DOFade(0f, 0.5f);
         spriteRenderer.sortingOrder = 2;
         Destroy(piece.gameObject, 0.5f);
+
+
+
     }
 }
